@@ -134,15 +134,11 @@ class ScrapingService {
         return this.crearEventosFallback();
       }
 
-      // Eliminar duplicados por título
-      const eventosUnicos = eventos.filter((evento, index, self) => 
-        index === self.findIndex(e => e.titulo === evento.titulo)
-      );
-
-      console.log(`✅ Scraping completado: ${eventosUnicos.length} eventos únicos`);
-      console.log(`📋 Eventos únicos:`, eventosUnicos.map(e => e.titulo));
+      // Retornar todos los eventos sin eliminar duplicados
+      console.log(`✅ Scraping completado: ${eventos.length} eventos`);
+      console.log(`📋 Todos los eventos:`, eventos.map(e => e.titulo));
       
-      return eventosUnicos;
+      return eventos;
 
     } catch (error) {
       console.error('❌ Error en scraping:', error.message);
