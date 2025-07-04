@@ -13,7 +13,7 @@ try {
 class EventosController {
   constructor() {
     if (ScrapingService) {
-      this.scrapingService = new ScrapingService();
+    this.scrapingService = new ScrapingService();
     }
   }
 

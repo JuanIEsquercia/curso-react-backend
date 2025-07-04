@@ -10,7 +10,7 @@ router.post('/eventos/scraping', (req, res) => eventosController.ejecutarScrapin
 router.delete('/eventos', (req, res) => eventosController.eliminarEventos(req, res));
 router.get('/eventos/estadisticas', (req, res) => eventosController.getEstadisticas(req, res));
 
-// Ruta de prueba
+// Health check interno
 router.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -19,27 +19,42 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Ruta de diagnóstico para scraping
-router.get('/test-scraping', async (req, res) => {
+// TEMPORAL: Endpoint de diagnóstico para scraping
+router.get('/debug-scraping', async (req, res) => {
   try {
     const ScrapingService = require('./scraping-service');
     const scrapingService = new ScrapingService();
     
-    console.log('Probando scraping...');
+    console.log('🔍 Iniciando diagnóstico de scraping...');
+    
+    // Obtener eventos sin límite para diagnóstico
     const eventos = await scrapingService.scrapeEventos();
+    
+    // Verificar si son eventos reales o fallback
+    const esFallback = eventos.some(evento => 
+      evento.titulo === 'Festival de Chamamé 2025' || 
+      evento.titulo === 'Concierto de Guitarra Clásica' ||
+      evento.titulo === 'Fiesta de Cumbia y Música Tropical'
+    );
     
     res.json({
       success: true,
-      message: 'Prueba de scraping completada',
+      message: 'Diagnóstico de scraping completado',
       count: eventos.length,
-      eventos: eventos,
+      esFallback: esFallback,
+      maxEventosConfigurado: scrapingService.maxEventos,
+      eventos: eventos.map(e => ({
+        titulo: e.titulo,
+        tipo: e.tipo,
+        fecha: e.fecha
+      })),
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error en prueba de scraping:', error);
+    console.error('Error en diagnóstico de scraping:', error);
     res.status(500).json({
       success: false,
-      error: 'Error en prueba de scraping',
+      error: 'Error en diagnóstico de scraping',
       details: error.message,
       timestamp: new Date().toISOString()
     });
