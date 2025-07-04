@@ -5,7 +5,7 @@ class ScrapingService {
   constructor() {
     this.baseUrl = 'https://visitcorrientes.tur.ar';
     this.timeout = 15000; // Reducir timeout a 15 segundos
-    this.maxEventos = 6; // Reducir a 6 eventos para optimizar
+    this.maxEventos = 20; // Ahora el límite es 20
   }
 
   // Función optimizada para detectar el tipo de evento
@@ -59,6 +59,7 @@ class ScrapingService {
   async scrapeEventos() {
     try {
       console.log('🔄 Iniciando scraping optimizado...');
+      console.log(`📊 Límite configurado: ${this.maxEventos} eventos`);
       
       const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -76,27 +77,37 @@ class ScrapingService {
         throw new Error(`HTTP ${response.status}`);
       }
 
+      console.log('✅ Respuesta HTTP exitosa');
       const $ = cheerio.load(response.data);
       const eventos = [];
+      let elementosEncontrados = 0;
+
+      // Contar elementos totales encontrados
+      const totalElementos = $('.tribe-events-loop .type-tribe_events').length;
+      console.log(`🔍 Elementos encontrados en la página: ${totalElementos}`);
 
       $('.tribe-events-loop .type-tribe_events').each((index, element) => {
-        if (eventos.length >= this.maxEventos) return false; // Parar cuando llegamos al límite
-        
+        elementosEncontrados++;
+        console.log(`📝 Procesando elemento ${elementosEncontrados}/${totalElementos}`);
+        // Solo limitamos a 20 por seguridad, pero si hay menos, trae todos
+        if (eventos.length >= this.maxEventos) {
+          console.log(`⏹️ Límite alcanzado (${this.maxEventos}), parando procesamiento`);
+          return false;
+        }
         try {
           const $el = $(element);
           const titulo = $el.find('.tribe-events-list-event-title a').text().trim();
-          
-          if (!titulo || titulo.length < 3) return;
-          
+          if (!titulo || titulo.length < 3) {
+            console.log(`⚠️ Título inválido: "${titulo}"`);
+            return;
+          }
           const fechaTexto = $el.find('.tribe-event-date-start').text().trim();
           const tipo = $el.find('.tribe-events-list-event-description').text().trim() || 'Evento';
           const ubicacion = $el.find('.tribe-events-venue-details a').text().trim() || 'Corrientes, Argentina';
           const url = $el.find('.tribe-events-list-event-title a').attr('href') || `${this.baseUrl}/eventos/`;
-          
           const fechaISO = this.procesarFecha(fechaTexto);
           const descripcion = this.crearDescripcion(tipo);
-          
-          eventos.push({
+          const evento = {
             id: `evento_${Date.now()}_${index}`,
             titulo,
             descripcion,
@@ -108,12 +119,15 @@ class ScrapingService {
             estado: 'activo',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
-          });
-          
+          };
+          eventos.push(evento);
+          console.log(`✅ Evento agregado: "${titulo}" (${eventos.length}/${this.maxEventos})`);
         } catch (error) {
-          console.error('Error al procesar evento:', error.message);
+          console.error(`❌ Error al procesar evento ${elementosEncontrados}:`, error.message);
         }
       });
+
+      console.log(`📊 Eventos procesados: ${eventos.length}`);
 
       if (eventos.length === 0) {
         console.log('⚠️ No se encontraron eventos, usando fallback...');
@@ -125,7 +139,9 @@ class ScrapingService {
         index === self.findIndex(e => e.titulo === evento.titulo)
       );
 
-      console.log(`✅ Scraping completado: ${eventosUnicos.length} eventos`);
+      console.log(`✅ Scraping completado: ${eventosUnicos.length} eventos únicos`);
+      console.log(`📋 Eventos únicos:`, eventosUnicos.map(e => e.titulo));
+      
       return eventosUnicos;
 
     } catch (error) {
