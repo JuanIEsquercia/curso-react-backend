@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para la colección de alojamientos
+    match /alojamientos/{alojamientoId} {
+      allow read: if true;  // Permitir lectura a todos
+      allow create: if request.auth != null;  // Solo usuarios autenticados pueden crear
+      allow update, delete: if request.auth != null && 
+        (request.auth.uid == resource.data.propietarioId ||
+         request.auth.token.email == 'jiesquercia@gmail.com');  // Propietario o superadmin pueden modificar/eliminar
+    }
+    
+    // Reglas para la colección de usuarios
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+        (request.auth.uid == userId || 
+         request.auth.token.email == 'jiesquercia@gmail.com');  // Usuario o superadmin pueden modificar
+    }
+    
+    // Reglas para la colección de huéspedes reportados
+    match /huespedesReportados/{reporteId} {
+      allow read: if request.auth != null;  // Solo usuarios autenticados pueden leer
+      allow create: if request.auth != null;  // Solo usuarios autenticados pueden crear
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.usuarioReportante ||
+         request.auth.token.email == 'jiesquercia@gmail.com');  // Creador o superadmin pueden eliminar
+      allow update: if false;  // No se permite modificar reportes
+    }
+    
+    // Reglas para la colección de reportes (alias)
+    match /reportes/{reporteId} {
+      allow read: if request.auth != null;  // Solo usuarios autenticados pueden leer
+      allow create: if request.auth != null;  // Solo usuarios autenticados pueden crear
+      allow delete: if request.auth != null && 
+        (request.auth.uid == resource.data.usuarioReportante ||
+         request.auth.token.email == 'jiesquercia@gmail.com');  // Creador o superadmin pueden eliminar
+      allow update: if false;  // No se permite modificar reportes
+    }
+    
+    // Reglas para la colección de contactos
+    match /contactos/{contactoId} {
+      allow read: if request.auth != null;  // Solo usuarios autenticados pueden leer
+      allow create: if request.auth != null;  // Solo usuarios autenticados pueden crear
+      allow update: if request.auth != null;  // Temporalmente permitir a todos los usuarios autenticados
+      allow delete: if request.auth != null;  // Temporalmente permitir a todos los usuarios autenticados
+    }
+    
+    // Reglas para la colección de eventos - SEGURAS
+    match /eventos/{eventoId} {
+      allow read: if true;  // Permitir lectura a todos (eventos públicos)
+      allow create, update, delete: if 
+        // Solo super admin desde frontend
+        (request.auth != null && request.auth.token.email == 'jiesquercia@gmail.com') ||
+        // O desde Admin SDK (backend)
+        (request.auth == null);
+    }
+    
+    // Reglas para la colección de tipos de eventos - SEGURAS
+    match /tiposEventos/{tipoId} {
+      allow read: if true;  // Permitir lectura a todos
+      allow create, update, delete: if 
+        // Solo super admin desde frontend
+        (request.auth != null && request.auth.token.email == 'jiesquercia@gmail.com') ||
+        // O desde Admin SDK (backend)
+        (request.auth == null);
+    }
+  }
+} 
+ 
