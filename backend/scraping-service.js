@@ -22,7 +22,20 @@ class ScrapingService {
     
     const dia = parseInt(fechaMatch[1]);
     const mes = meses[fechaMatch[2].toLowerCase()];
-    const anio = 2025;
+    const anioActual = new Date().getFullYear();
+    const mesActual = new Date().getMonth() + 1; // getMonth() devuelve 0-11
+    
+    // Lógica para determinar el año correcto
+    let anio = anioActual;
+    
+    // Si estamos en diciembre y el evento es de enero-febrero, probablemente sea del próximo año
+    if (mesActual === 12 && (mes === 1 || mes === 2)) {
+      anio = anioActual + 1;
+    }
+    // Si estamos en enero-febrero y el evento es de noviembre-diciembre, probablemente sea del año anterior
+    else if ((mesActual === 1 || mesActual === 2) && (mes === 11 || mes === 12)) {
+      anio = anioActual - 1;
+    }
     
     if (mes === undefined) return new Date().toISOString().split('T')[0];
     
