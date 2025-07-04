@@ -19,46 +19,4 @@ router.get('/health', (req, res) => {
   });
 });
 
-// TEMPORAL: Endpoint de diagnóstico para scraping
-router.get('/debug-scraping', async (req, res) => {
-  try {
-    const ScrapingService = require('./scraping-service');
-    const scrapingService = new ScrapingService();
-    
-    console.log('🔍 Iniciando diagnóstico de scraping...');
-    
-    // Obtener eventos sin límite para diagnóstico
-    const eventos = await scrapingService.scrapeEventos();
-    
-    // Verificar si son eventos reales o fallback
-    const esFallback = eventos.some(evento => 
-      evento.titulo === 'Festival de Chamamé 2025' || 
-      evento.titulo === 'Concierto de Guitarra Clásica' ||
-      evento.titulo === 'Fiesta de Cumbia y Música Tropical'
-    );
-    
-    res.json({
-      success: true,
-      message: 'Diagnóstico de scraping completado',
-      count: eventos.length,
-      esFallback: esFallback,
-      maxEventosConfigurado: scrapingService.maxEventos,
-      eventos: eventos.map(e => ({
-        titulo: e.titulo,
-        tipo: e.tipo,
-        fecha: e.fecha
-      })),
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Error en diagnóstico de scraping:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Error en diagnóstico de scraping',
-      details: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
 module.exports = router; 
