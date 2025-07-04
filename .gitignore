@@ -81,4 +81,4 @@ ui-debug.log
 desktop.ini
 
 # Backend Firebase config file
-backend/firebase-config.js 
+#backend/firebase-config.js 
